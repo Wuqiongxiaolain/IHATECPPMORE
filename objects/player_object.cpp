@@ -58,3 +58,30 @@ void PlayerObject::Update()
     }
 	Rotate(angle);
 }
+
+void PlayerObject::OnCollisionEnter(const ObjManager::ObjToken& other_token, const CF_Manifold& manifold) noexcept {
+    // 碰撞进入时的处理逻辑
+    printf("Collided with object token: %u\n", other_token.index);
+	//将Player对象的位置重置到上一帧位置，避免穿透
+	SetPosition(GetPrevPosition());
+
+}
+
+void PlayerObject::OnCollisionStay(const ObjManager::ObjToken& other_token, const CF_Manifold& manifold) noexcept {
+    // 碰撞持续时的处理逻辑
+	printf("Still colliding with object token: %u\n", other_token.index);
+	//修复 E0265 错误：BasePhysics::get_position 是 protected/private，需通过公开接口访问
+	// 假设 PlayerObject 继承自 BaseObject，BaseObject 继承自 BasePhysics
+	// 使用 this->GetPosition() 替代 get_position()，GetPosition() 应为 BaseObject 的公开方法
+
+	CF_V2 correction = cf_v2(-manifold.n.x * manifold.depths[0], -manifold.n.y * manifold.depths[0]);
+	CF_V2 current_position = GetPosition(); // 使用公开接口
+	CF_V2 new_position = cf_v2(current_position.x + correction.x, current_position.y + correction.y);
+	SetPosition(new_position);
+
+}
+
+void PlayerObject::OnCollisionExit(const ObjManager::ObjToken& other_token, const CF_Manifold& manifold) noexcept {
+    // 碰撞退出时的处理逻辑
+    printf("No longer colliding with object token: %u\n", other_token.index);
+}

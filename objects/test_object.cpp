@@ -16,9 +16,7 @@ void TestObject::Update()
 {
 	// 使用 BaseObject 暴露的物理接口来修改速度/受力：
 	// 1) 根据按键添加力（SetForce）
-	// 2) 将力积分到速度（ApplyForce）
 	// 3) 可选阻尼（SetVelocity）
-	// 4) 将速度积分到位置（ApplyVelocity）
 
 	CF_V2 inputForce = cf_v2(0.0f, 0.0f);
 	if (cf_key_down(CF_KEY_LEFT)) {
