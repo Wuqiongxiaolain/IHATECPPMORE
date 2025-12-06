@@ -22,6 +22,8 @@
 class BaseObject;
 void RenderBaseObjectCollisionDebug(const BaseObject* obj) noexcept;
 
+inline ObjManager& objs = ObjManager::Instance();
+
 class BaseObject : public BasePhysics, private PngSprite {
 public:
     BaseObject() noexcept
@@ -37,10 +39,8 @@ public:
     }
 
     // 每帧引擎调用点：包含 Update()、物理运动与 debug 绘制
-    void FramelyUpdate() noexcept
+    void FramelyApply() noexcept
     {
-        Update(); // 用户实现的每帧逻辑
-
         // 应用力与速度更新位置
         ApplyForce();
         ApplyVelocity();
@@ -299,6 +299,10 @@ public:
 
     ~BaseObject() noexcept;
 
+protected:
+    // 受保护的 getter，供派生类访问自身的 token（只读）
+    const ObjManager::ObjToken& GetObjToken() const noexcept { return m_obj_token; }
+
 private:
     using BasePhysics::get_position;
     using BasePhysics::set_position;
@@ -333,6 +337,15 @@ private:
     bool m_isColliderApplyPivot = true;
 
 	std::unordered_set<std::string> tags; // 对象标签集合（无序，不重复）
+
+    // 对象在 ObjManager 中的句柄（默认无效）
+    ObjManager::ObjToken m_obj_token = ObjManager::ObjToken::Invalid();
+
+    // 仅供 ObjManager 设置/清除 token（友元保证只有 ObjManager 可以直接设置）
+    void SetObjToken(const ObjManager::ObjToken& t) noexcept { m_obj_token = t; }
+
+    // 允许 ObjManager 在创建/销毁时设置 token
+    friend class ObjManager;
 
     void update_world_shape_flag() noexcept
     {

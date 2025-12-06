@@ -45,7 +45,7 @@ void PlayerObject::Update()
 	dir = v2math::normalized(dir);
     CF_V2 vel = cf_v2(dir.x * speed, dir.y * speed);
 
-    // 使用物理接口设置速度，让 FramelyUpdate 的 ApplyVelocity 去移动并保存 prev_position
+    // 使用物理接口设置速度，让 FramelyApply 的 ApplyVelocity 去移动并保存 prev_position
     SetVelocity(vel);
 
 	// 计算朝向角度（弧度制，0 度为正右，逆时针旋转）
