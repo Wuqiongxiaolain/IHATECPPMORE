@@ -5,7 +5,7 @@
 #if COLLISION_DEBUG
 #include <iomanip>
 #include <cmath>
-// 辅助：打印形状的 world-space 信息，用于调试碰撞细节
+// 辅助：打印形状的 world-space 信息，用于调试碰撞细节。仅在 COLLISION_DEBUG 启用时编译。
 static void dump_shape_world(const CF_ShapeWrapper& s) noexcept {
 	switch (s.type) {
 	case CF_SHAPE_TYPE_AABB:
@@ -34,6 +34,8 @@ static void dump_shape_world(const CF_ShapeWrapper& s) noexcept {
 #endif
 
 // 清理并规范化碰撞流中产生的 manifold，保证数值与语义安全（供后续处理使用）
+// - 将 count 限定在合法范围 [0,2]
+// - 修正 depths, contact_points, normal 等可能的 NaN/Inf/负值
 static void normalize_and_clamp_manifold(CF_Manifold& m) noexcept
 {
 	// 将 count 限定在 [0,2]
@@ -67,6 +69,8 @@ static void normalize_and_clamp_manifold(CF_Manifold& m) noexcept
 }
 
 // 将局部空间的 shape 平移至 world-space（不做旋转），用于 narrowphase 前的预处理
+// - delta 为 world-space 中的位置偏移（通常为 object.position）
+// - 该函数不会修改输入 shape，而是返回一个新的 CF_ShapeWrapper（值拷贝）
 static CF_ShapeWrapper translate_shape_world(const CF_ShapeWrapper& s, const CF_V2& delta) noexcept
 {
 	CF_ShapeWrapper out = s;
@@ -94,6 +98,7 @@ static CF_ShapeWrapper translate_shape_world(const CF_ShapeWrapper& s, const CF_
 }
 
 // 将 shape 转换为 AABB，用于 broadphase 网格索引或快速剔除
+// - 返回值为该形状在 world-space 下的轴对齐包围盒（用于格子索引）
 static CF_Aabb shape_wrapper_to_aabb(const CF_ShapeWrapper& s) noexcept
 {
 	CF_Aabb aabb{};
@@ -148,6 +153,8 @@ static CF_Aabb shape_wrapper_to_aabb(const CF_ShapeWrapper& s) noexcept
 
 // 使用 Cute Framework 的碰撞函数计算 world-space shape 的碰撞信息，
 // 并对结果进行基础校验和归一化，返回是否发生碰撞。
+// - 调用者应保证传入的 A/B 为 world-space（translate_shape_world 或 BasePhysics 已处理）
+// - out_manifold 为可选输出（若非 nullptr 则写入计算结果）
 static bool shapes_collide_world(const CF_ShapeWrapper& A, const CF_ShapeWrapper& B, CF_Manifold* out_manifold) noexcept
 {
 	CF_Manifold m{};
@@ -174,6 +181,7 @@ static bool shapes_collide_world(const CF_ShapeWrapper& A, const CF_ShapeWrapper
 }
 
 // 注意：PhysicsSystem 通过 ObjToken 管理 BasePhysics 的注册与反注册，从而在 Step() 中统一进行碰撞检测与回调。
+// 以下实现关注性能与稳定性：使用格子 broadphase 降低 narrowphase 次数，合并重复 contact 以限制每对最多两个 contact。
 void PhysicsSystem::Register(const ObjManager::ObjToken& token, BasePhysics* phys) noexcept
 {
 	if (!phys) return;
@@ -193,6 +201,7 @@ void PhysicsSystem::Register(const ObjManager::ObjToken& token, BasePhysics* phy
 }
 
 // 反注册：将条目从 entries_ 中移除并维护映射一致性
+// - 将尾部条目移动到被删除位置以避免 O(n) 删除成本，同时更新 token_map_
 void PhysicsSystem::Unregister(const ObjManager::ObjToken& token) noexcept
 {
 	uint64_t key = make_key(token);
@@ -237,7 +246,7 @@ void PhysicsSystem::Step(float cell_size) noexcept
 			ws = s;
 		}
 		else {
-			// 将 local shape 平移到 world-space
+			// 将 local shape 平移到 world-space（旋转在 BasePhysics::tweak_shape_with_rotation 中处理）
 			ws = translate_shape_world(s, p->get_position());
 		}
 
@@ -447,7 +456,7 @@ void PhysicsSystem::Step(float cell_size) noexcept
 		}
 #endif
 
-		// 直接以引用调用回调
+		// 直接以引用调用回调（顺序不保证：a 的回调可能先于 b，也可能相反）
 		if (was_colliding) {
 			oa.OnCollisionState(ev.b, ev.manifold, BaseObject::CollisionPhase::Stay);
 		}

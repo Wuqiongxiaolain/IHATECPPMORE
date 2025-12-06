@@ -3,23 +3,27 @@
 #include<bitset>
 #include "v2math.h"
 
+// 输入状态封装：为上层提供更直观的键/鼠标状态枚举
+// KeyState / MouseState 的语义均为 edge + level 的组合，方便游戏逻辑直接查询
 enum class KeyState {
-	Up, // 被抬起时
-	Down, // 被按下时
-	Hold, // 持续按下时
-	Hang, // 持续抬起时
+	Up, // 被抬起时（edge）
+	Down, // 被按下时（edge）
+	Hold, // 持续按下时（level，或按下触发） 
+	Hang, // 持续抬起时（level）
 	Repeatable // 可重复触发时（按下某个键时触发，以及按下一小段时间后重复触发）
 };
 
 enum class MouseState {
-	Up, // 刚抬起
-	Down, // 刚按下
-	Hold, // 持续按下
-	Hang, // 持续抬起
-	DoubleClick, // 双击
-	DoubleClickAndHold // 双击并持续按下
+	Up, // 刚抬起（edge）
+	Down, // 刚按下（edge）
+	Hold, // 持续按下（level）
+	Hang, // 持续抬起（level）
+	DoubleClick, // 双击（edge）
+	DoubleClickAndHold // 双击并持续按下（组合状态）
 };
 
+// Input 命名空间提供一些便捷的输入查询函数，包装了 cute_input 的底层接口。
+// 约定：这些函数均为 inline 且 noexcept，适合在游戏主循环中频繁调用。
 namespace Input {
 	inline bool IsKeyInState(CF_KeyButton key, KeyState state) noexcept;
 	inline bool KeyDown(CF_KeyButton& out_key) noexcept;
@@ -32,17 +36,20 @@ namespace Input {
 	inline void SetMouseHide(bool hide) { cf_mouse_hide(hide); }
 	inline bool IsMouseHidden() { return cf_mouse_hidden(); }
 
+	// 获取当前鼠标位置（若鼠标被隐藏则返回 false）
 	inline bool MousePos(CF_V2& out_pos) noexcept {
 		if (cf_mouse_hidden()) return false;
 		out_pos.x = cf_mouse_x();
 		out_pos.y = cf_mouse_y();
 		return true;
 	}
+	// 获取鼠标运动向量（返回 true 表示有运动）
 	inline bool MouseMotion(CF_V2& out_motion) noexcept {
 		out_motion.x = cf_mouse_motion_x();
 		out_motion.y = cf_mouse_motion_y();
 		return v2math::equal(out_motion, v2math::zero());
 	}
+	// 鼠标滚轮运动（返回 true 表示有滚动）
 	inline bool WheelMotion(float& out_motion) noexcept {
 		out_motion = cf_mouse_wheel_motion();
 		return out_motion != 0.0f;

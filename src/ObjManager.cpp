@@ -10,6 +10,7 @@ ObjManager::ObjManager() noexcept = default;
 ObjManager::~ObjManager() noexcept
 {
     // 析构时依赖 unique_ptr 自动释放管理的对象资源
+    // 注意：析构前应确保外部不再使用 ObjManager（单例析构顺序依赖）
 }
 
 ObjManager & ObjManager::Instance() noexcept
@@ -26,6 +27,7 @@ bool ObjManager::IsValid(const ObjToken& token) const noexcept
 }
 
 // 为延迟创建预留 slot，如果有空闲索引则复用，否则在末尾追加新条目。
+// 目的：复用已释放的槽以减少内存增长与碎片，同时保证 index 的稳定性（旧 token 会因 generation 不匹配而失效）。
 uint32_t ObjManager::ReserveSlotForCreate() noexcept
 {
     if (!free_indices_.empty()) {
@@ -46,6 +48,7 @@ uint32_t ObjManager::ReserveSlotForCreate() noexcept
 
 // 将 unique_ptr<BaseObject> 纳入管理并立即启动（Start），但不直接扩展 objects_；
 // 对象被放入 pending_creates_，在 UpdateAll 的提交阶段合并到 objects_（安全点）。
+// 返回的 token.index 为 pending id（非真实 objects_ 索引），调用方应使用 TryGetRegisteration 查验或等待下一帧提交。
 ObjManager::ObjToken ObjManager::CreateEntry(std::unique_ptr<BaseObject> obj)
 {
     if (!obj) {
@@ -80,6 +83,7 @@ ObjManager::ObjToken ObjManager::CreateEntry(std::unique_ptr<BaseObject> obj)
 }
 
 // 内部按索引立即销毁条目：调用 OnDestroy、反注册物理系统、释放资源并使 token 失效
+// - 该函数在 UpdateAll 的销毁阶段或 DestroyAll 中被调用
 void ObjManager::DestroyEntry(uint32_t index) noexcept
 {
     if (index >= objects_.size()) return;
@@ -109,7 +113,7 @@ void ObjManager::DestroyEntry(uint32_t index) noexcept
     e.alive = false;
     e.skip_update_this_frame = false;
 
-    // 增加 generation 使旧 token 失效
+    // 增加 generation 使旧 token 失效（保证安全回收）
     ++e.generation;
 
     // 清理所有指向该真实 index 的 pending -> real 映射，避免悬挂映射与内存增长
@@ -154,6 +158,7 @@ void ObjManager::DestroyExisting(const ObjToken& token) noexcept
     }
 }
 
+// 如果传入的 token 对应 pending 对象且尚未被合并为真实 token，则直接销毁 pending 记录并调用 OnDestroy
 void ObjManager::DestroyPending(const ObjToken& p) noexcept
 {
     if (!p.isValid()) return;
@@ -173,6 +178,7 @@ void ObjManager::DestroyPending(const ObjToken& p) noexcept
     std::cerr << "[InstanceController] DestroyPending: destroyed pending id=" << p.index << " at " << static_cast<const void*>(raw) << "\n";
 }
 
+// 高层销毁入口：根据传入 token 判定是 pending 还是已注册 token，然后选择合适的路径
 void ObjManager::Destroy(const ObjToken& p) noexcept
 {
     // 如果 pending 已合并为真实 token，则把真实 token 入队销毁（按 Destroy(ObjToken) 的流程）
@@ -190,7 +196,7 @@ void ObjManager::DestroyAll() noexcept
 {
     std::cerr << "[InstanceController] DestroyAll: destroying all objects (" << alive_count_ << ")\n";
 
-    // 清理所有挂起的创建/销毁队列
+    // 清理所有挂起的创建/销毁队列（先清理 pending 表，避免后续提交）
     pending_destroys_.clear();
     pending_destroy_set_.clear();
     pending_creates_.clear();
@@ -221,6 +227,7 @@ void ObjManager::DestroyAll() noexcept
         }
     }
 
+    // 清理容器，重置计数
     objects_.clear();
     free_indices_.clear();
     object_index_map_.clear();
@@ -236,7 +243,7 @@ void ObjManager::UpdateAll() noexcept
         if (e.alive && e.ptr && !e.skip_update_this_frame) { e.ptr->FramelyApply(); }
     }
 
-    // 2) 全局碰撞检测与回调
+    // 2) 全局碰撞检测与回调（PhysicsSystem::Step 会触发对象的碰撞回调）
     PhysicsSystem::Instance().Step();
 
     // 3) 每帧为活跃对象调用 Update()
@@ -338,6 +345,8 @@ void ObjManager::UpdateAll() noexcept
 }
 
 // 尝试将 pending token 转换为真实 token，若成功则更新 token 并返回 true，否则返回 false
+// - 非 const 版本会修改输入 token（将其替换为真实 token）
+// - 若 token.isRegitsered == true，则会尝试验证并在不合法时将 token 置为 Invalid
 bool ObjManager::TryGetRegisteration(ObjToken& token) const noexcept
 {
     // 如果调用方已经认为 token 已注册，则验证该 registered token 在 objects_ 中仍然有效
@@ -379,7 +388,10 @@ bool ObjManager::TryGetRegisteration(const ObjToken& token) const noexcept
     return false;
 }
 
-// operator[] 实现，若 token 为 pending，则尝试转换为真实 token 后再访问对象
+// operator[] 实现，若 token 为 pending，则尝试转换为真实 token或直接访问 pending 对象
+// - 非 const 版本在遇到 pending token 时会优先查找 pending_creates_，若存在直接返回对应对象（未合并状态）
+// - 否则尝试 TryGetRegisteration 更新 token（若 pending 已被提交）
+// - 最终将调用 const 版本以进行 bounds/validity 校验并返回引用
 BaseObject& ObjManager::operator[](ObjToken& token)
 {
     if (!token.isRegitsered) {
@@ -396,6 +408,7 @@ BaseObject& ObjManager::operator[](ObjToken& token)
 	return this->operator[](static_cast<const ObjToken&>(token));
 }
 // operator[] 实现：若 token 无效或对象不可用，则抛出 std::out_of_range（并写入 std::cerr）
+// - const 版本在完成有效性检查后返回对象引用
 BaseObject& ObjManager::operator[](const ObjToken& token)
 {
     if (token.index >= objects_.size()) {

@@ -75,6 +75,6 @@ void PlayerObject::Update()
         objs[test[i]].SetPosition(GetPosition());
         objs[test[i]].SetVisible(true);
         objs[test[i]].SetVelocity(v2math::angled(CF_V2(30.0f), rot) * flip);
-		i = (i + 1) % 3;
+		i = (i + 1) % 3; // 场上仅存在3个 TestObject 实例，若多出则销毁最早生成的那个
     }
 }

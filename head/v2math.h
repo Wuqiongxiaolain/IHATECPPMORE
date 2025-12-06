@@ -5,6 +5,8 @@
 inline constexpr float pi = 3.14159265358979f;
 
 // 2D 向量基础数学工具（面向使用者的简单接口）
+// 说明：这些函数封装了 Cute Framework 的 CF_V2 及 math 操作，目标是提供轻量且无异常的工具函数。
+// 注意数值稳定性：normalized/length 等在接近 0 的输入下做了保护处理以避免除以零。
 namespace v2math {
 	inline CF_V2 zero() { return CF_V2{ 0.0f, 0.0f }; }
 	inline float length(const CF_V2& vect) noexcept { return cf_sqrt(vect.x * vect.x + vect.y * vect.y); }
