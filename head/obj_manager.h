@@ -60,6 +60,9 @@ public:
     const BaseObject& operator[](ObjToken& token) const;
     const BaseObject& operator[](const ObjToken& token) const;
 
+	bool TryGetRegisteration(ObjToken& token) const noexcept;
+    bool TryGetRegisteration(const ObjToken& token) const noexcept;
+
     // 支持以 PendingToken 直接销毁（若已合并则转为销毁真实 ObjToken，否则销毁 pending）
     void Destroy(const ObjToken& p) noexcept;
 
@@ -106,8 +109,6 @@ private:
     // 将 unique_ptr<BaseObject> 的对象纳入管理并在必要时调用 Start()，返回 PendingToken 表示创建请求。
     // 对象会被放入 pending_creates_（带 id），在 UpdateAll 的提交阶段合并到 objects_ 并完成物理注册。
     ObjToken CreateEntry(std::unique_ptr<BaseObject> obj);
-
-	ObjToken check_pending_to_real(const ObjToken& p) const noexcept;
 
     // 存储对象条目
     std::vector<Entry> objects_;

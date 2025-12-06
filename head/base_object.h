@@ -90,6 +90,8 @@ public:
     float GetRotation() const noexcept { return PngSprite::GetSpriteRotation(); }
     void SetRotation(float rot) noexcept
     {
+        if(rot > pi) rot -= 2 * pi;
+		else if (rot < -pi) rot += 2 * pi;
         PngSprite::SetSpriteRotation(rot);
         if (IsColliderRotate()) {
             BasePhysics::set_rotation(PngSprite::GetSpriteRotation());
@@ -150,10 +152,18 @@ public:
 
     // 控制碰撞器是否随精灵旋转与枢轴设置同步
     bool IsColliderRotate() const noexcept { return m_isColliderRotate; }
-    void SetColliderRotate(bool v) noexcept { m_isColliderRotate = v; update_world_shape_flag(); }
+    bool IsColliderRotate(bool v) noexcept { 
+        m_isColliderRotate = v; 
+        update_world_shape_flag(); 
+		return m_isColliderRotate;
+    }
 
     bool IsColliderApplyPivot() const noexcept { return m_isColliderApplyPivot; }
-    void SetColliderApplyPivot(bool v) noexcept { m_isColliderApplyPivot = v; update_world_shape_flag(); }
+    bool IsColliderApplyPivot(bool v) noexcept { 
+        m_isColliderApplyPivot = v; 
+        update_world_shape_flag(); 
+		return m_isColliderApplyPivot;
+    }
 
     // 将 BasePhysics 的常用接口以 PascalCase 暴露给上层，便于脚本/外部调用
     const CF_V2& GetPosition() const noexcept { return get_position(); }

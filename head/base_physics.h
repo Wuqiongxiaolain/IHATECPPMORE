@@ -192,7 +192,11 @@ public:
 	}
 
 	// rotation / pivot ½Ó¿Ú
-	void set_rotation(float r) noexcept { rotation_ = r; world_shape_dirty_ = true; }
+	void set_rotation(float r) noexcept { 
+		if(r > pi) r -= 2 * pi;
+		else if (r < -pi) r += 2 * pi;
+		rotation_ = r; world_shape_dirty_ = true; 
+	}
 	float get_rotation() const noexcept { return rotation_; }
 
 	void set_pivot(const CF_V2& p) noexcept { pivot_ = p; world_shape_dirty_ = true; }

@@ -14,5 +14,5 @@ struct ObjToken {
 	bool isValid() const noexcept { return (index != std::numeric_limits<uint32_t>::max()); }
     bool operator==(const ObjToken& o) const noexcept { return index == o.index && generation == o.generation; }
     bool operator!=(const ObjToken& o) const noexcept { return !(*this == o); }
-    static constexpr ObjToken Invalid() noexcept { return { std::numeric_limits<uint32_t>::max(), 0 }; }
+    static constexpr ObjToken Invalid() noexcept { return { std::numeric_limits<uint32_t>::max(), 0, false }; }
 };

@@ -157,7 +157,7 @@ void ObjManager::DestroyExisting(const ObjToken& token) noexcept
 void ObjManager::DestroyPending(const ObjToken& p) noexcept
 {
     if (!p.isValid()) return;
-    if (p.isRegitsered)return;
+    if (TryGetRegisteration(p)) return;
 
     auto it = pending_creates_.find(p.index);
     if (it == pending_creates_.end()) return;
@@ -176,8 +176,9 @@ void ObjManager::DestroyPending(const ObjToken& p) noexcept
 void ObjManager::Destroy(const ObjToken& p) noexcept
 {
     // 如果 pending 已合并为真实 token，则把真实 token 入队销毁（按 Destroy(ObjToken) 的流程）
-    if (p.isRegitsered) {
-        DestroyExisting(p);
+    ObjToken copy = p;
+    if (TryGetRegisteration(copy)) {
+        DestroyExisting(copy);
         return;
     }
 
@@ -336,6 +337,48 @@ void ObjManager::UpdateAll() noexcept
     }
 }
 
+// 尝试将 pending token 转换为真实 token，若成功则更新 token 并返回 true，否则返回 false
+bool ObjManager::TryGetRegisteration(ObjToken& token) const noexcept
+{
+    // 如果调用方已经认为 token 已注册，则验证该 registered token 在 objects_ 中仍然有效
+    if (token.isRegitsered) {
+        if (token.index < objects_.size()) {
+            const Entry& e = objects_[token.index];
+            if (e.alive && e.generation == token.generation && e.ptr) {
+                return true; // 注册且合法
+            }
+        }
+        // 注册标记不合法：在非 const 环境下把 token 置为 Invalid 并返回 false
+        token = ObjToken::Invalid();
+        return false;
+    }
+
+    // 尚未标记为 registered：检查 pending -> real 映射表
+    auto it = pending_to_real_map_.find(token.index);
+    if (it != pending_to_real_map_.end()) {
+        token = it->second;
+        return true;
+    }
+    return false;
+}
+// 尝试检查 pending token 是否已合并为真实 token，返回是否存在对应的真实 token
+bool ObjManager::TryGetRegisteration(const ObjToken& token) const noexcept
+{
+    // 如果调用方已经认为 token 已注册，则验证该 registered token 在 objects_ 中仍然有效（不能修改 token）
+    if (token.isRegitsered) {
+        if (token.index < objects_.size()) {
+            const Entry& e = objects_[token.index];
+            return (e.alive && e.generation == token.generation && e.ptr);
+        }
+        return false;
+    }
+
+    // 尚未标记为 registered：检查 pending -> real 映射表（只检查，不修改）
+    auto it = pending_to_real_map_.find(token.index);
+    if (it != pending_to_real_map_.end()) return true;
+    return false;
+}
+
 // operator[] 实现，若 token 为 pending，则尝试转换为真实 token 后再访问对象
 BaseObject& ObjManager::operator[](ObjToken& token)
 {
@@ -346,9 +389,9 @@ BaseObject& ObjManager::operator[](ObjToken& token)
 			std::cerr << "[InstanceController] operator[]: accessing pending object at " << static_cast<const void*>(raw) << "\n";
 			return *raw;
         }
-        ObjToken real = check_pending_to_real(token);
+        // 尝试使用 TryGetRegisteration 更新 token（若 pending 已被提交）
+        TryGetRegisteration(token);
 		std::cerr << "[InstanceController] operator[]: checked pending token, updating token to the registered version\n";
-        if (real.isValid()) token = real;
     }
 	return this->operator[](static_cast<const ObjToken&>(token));
 }
@@ -366,6 +409,7 @@ BaseObject& ObjManager::operator[](const ObjToken& token)
     }
     return *e.ptr;
 }
+
 // const 版本的 operator[]，接受 pending token 并尝试转换为真实 token
 const BaseObject& ObjManager::operator[](ObjToken& token) const
 {
@@ -376,9 +420,9 @@ const BaseObject& ObjManager::operator[](ObjToken& token) const
             std::cerr << "[InstanceController] operator[]: accessing pending object at " << static_cast<const void*>(raw) << "\n";
             return *raw;
         }
-        ObjToken real = check_pending_to_real(token);
+        // 尝试使用 TryGetRegisteration 更新 token（若 pending 已被提交）
+		TryGetRegisteration(token);
         std::cerr << "[InstanceController] operator[]: checked pending token, updating token to the registered version\n";
-        if (real.isValid()) token = real;
     }
     return this->operator[](static_cast<const ObjToken&>(token));
 }
@@ -395,15 +439,4 @@ const BaseObject& ObjManager::operator[](const ObjToken& token) const
         throw std::out_of_range("ObjManager::operator[] const: token invalid or object not alive");
     }
     return *e.ptr;
-}
-
-// 检查 pending token 是否已合并为真实 token，若是则返回真实 token，否则返回 Invalid
-ObjToken ObjManager::check_pending_to_real(const ObjToken& pending_token) const noexcept
-{
-	if (pending_token.isRegitsered) return pending_token;
-    auto it = pending_to_real_map_.find(pending_token.index);
-    if (it != pending_to_real_map_.end()) {
-        return it->second;
-    }
-    return ObjToken::Invalid();
 }

@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <atomic>
 #include "cute_png_cache.h" // 使用 CF_Png / png_cache API
+#include "v2math.h"
 
 // PngFrame 表示单帧的 RGBA 像素数据和尺寸信息，供渲染或上传使用。
 struct PngFrame {
@@ -54,8 +55,16 @@ public:
 
     // 旋转属性接口（以弧度为单位）
     float GetSpriteRotation() const noexcept { return m_rotation; }
-    void SetSpriteRotation(float rot) noexcept { m_rotation = rot; }
-    void RotateSprite(float drot) noexcept { m_rotation += drot; }
+    void SetSpriteRotation(float rot) noexcept { 
+        if (rot > pi) rot -= 2 * pi;
+        else if (rot < -pi) rot += 2 * pi;
+        m_rotation = rot; 
+    }
+    void RotateSprite(float drot) noexcept { 
+        m_rotation += drot; 
+        if (m_rotation > pi) m_rotation -= 2 * pi;
+        else if (m_rotation < -pi) m_rotation += 2 * pi;
+    }
 
     // 翻转标志（供渲染使用）
     bool m_flip_x = false;  // 水平翻转

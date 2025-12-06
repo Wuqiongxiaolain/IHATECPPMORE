@@ -4,6 +4,8 @@
 // 每帧移动的速度
 static constexpr float speed = 3.0f;
 const float PI = 3.14159265358979f;
+ObjToken test[3] = { ObjToken::Invalid() };
+int i = 0;
 void PlayerObject::Start()
 {
 	// 统一设置贴图路径、竖排帧数、动画更新频率和绘制深度，并注册到绘制序列
@@ -52,9 +54,27 @@ void PlayerObject::Update()
     float angle = 0;
     if (Input::IsKeyInState(CF_KEY_Q, KeyState::Hold)) {
 		angle += PI / 60.0f; // 每帧逆时针旋转 3 度
+		std::cout << GetRotation() << std::endl;
     }
     if (Input::IsKeyInState(CF_KEY_E, KeyState::Hold)) {
 		angle -= PI / 60.0f; // 每帧顺时针旋转 3 度
     }
 	Rotate(angle);
+
+	// 按空格键发射 TestObject 实例
+    if (Input::IsKeyInState(CF_KEY_SPACE, KeyState::Down)) {
+        if (objs.TryGetRegisteration(test[i])) {
+			objs.Destroy(test[i]);
+        }
+        auto test_token = objs.Create<TestObject>();
+        if (test_token.isValid()) test[i] = test_token;
+        auto rot = GetRotation();
+        int flip = (SpriteGetFlipX() ? -1 : 1);
+        objs[test[i]].SetRotation(rot);
+        objs[test[i]].SpriteFlipX(SpriteGetFlipX());
+        objs[test[i]].SetPosition(GetPosition());
+        objs[test[i]].SetVisible(true);
+        objs[test[i]].SetVelocity(v2math::angled(CF_V2(30.0f), rot) * flip);
+		i = (i + 1) % 3;
+    }
 }
