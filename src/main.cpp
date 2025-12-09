@@ -11,6 +11,7 @@
 #include "base_object.h"
 #include "drawing_sequence.h"
 #include "player_object.h"
+#include "test_block.h"
 #include "obj_manager.h"
 #include "backgroud.h"
 #include "block_object.h"
@@ -21,6 +22,7 @@ static void print_debug_flags_once() {
 
 // 全局帧计数
 std::atomic<int> g_frame_count{0};
+int g_frame_rate = 50; // 目标帧率
 // 多播委托：无参数、无返回值
 Delegate<> main_thread_on_update;
 
@@ -51,6 +53,7 @@ int main(int argc, char* argv[])
 
 	// 使用 InstanceController 创建对象：现在返回 token（ObjectToken）
 	auto player_token = ObjManager::Instance().Create<PlayerObject>();
+	auto block_token = ObjManager::Instance().Create<TestBlock>();
 
 	// 创建背景对象
 	auto background_token = ObjManager::Instance().Create<Backgroud>();
@@ -91,7 +94,7 @@ int main(int argc, char* argv[])
 		ObjManager::Instance().UpdateAll();
 		});
 
-	cf_set_target_framerate(50);
+	cf_set_target_framerate(g_frame_rate);
 
 	auto esc_hold_threshold = std::chrono::seconds(3);
 	bool esc_was_down = false;
