@@ -36,7 +36,6 @@ void TestObject::Update()
 		SetVelocity(vel);
 	}
 
-<<<<<<< Updated upstream
 	// ����ס�ո�ʱ��ʹ�����岻�ɼ�
 	if (cf_key_down(CF_KEY_W)) {
 		SetVisible(false);
@@ -44,7 +43,3 @@ void TestObject::Update()
 		SetVisible(true);
 	}
 }
-=======
-
-}
->>>>>>> Stashed changes

@@ -48,15 +48,9 @@ int main(int argc, char* argv[])
 		fs_mount(base.c_str(), "");
 	}
 
-<<<<<<< Updated upstream
-	// ʹ�� InstanceController �����������ڷ��� token��ObjectToken��
-	auto player_token = ObjManager::Instance().CreateImmediate<PlayerObject>();
-	auto test_token = ObjManager::Instance().CreateImmediate<TestObject>();
-=======
 	// 使用 InstanceController 创建对象：现在返回 token（ObjectToken）
 	auto player_token = ObjManager::Instance().Create<PlayerObject>();
 	auto block_token = ObjManager::Instance().Create<TestBlock>();
->>>>>>> Stashed changes
 
 	auto update_token = main_thread_on_update.add([]() {
 		ObjManager::Instance().UpdateAll();
