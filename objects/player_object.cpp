@@ -16,7 +16,7 @@ void PlayerObject::Start()
     // 可选：初始化位置（根据需要调整），例如屏幕中心附近
     SetPosition(cf_v2(0.0f, 0.0f));
 
-    Scale(0.5f);
+    Scale(0.6f);
 	SetPivot(1,1);
 }
 
@@ -39,10 +39,10 @@ void PlayerObject::Update()
 
     if (dir.x != 0) {
 		SpriteFlipX(dir.x < 0); // 根据水平移动方向翻转贴图
-        SpriteSetStats("/sprites/walk.png", 2, 7, 0, false);
+        SpriteSetStats("/sprites/walk.png", 2, 5, 0, false);
     }
     else {
-		SpriteSetStats("/sprites/idle.png", 3, 7, 0, false);
+		SpriteSetStats("/sprites/idle.png", 3, 6, 0, false);
     }
 
     // 归一化速度向量以防对角移动过快
@@ -71,20 +71,19 @@ void PlayerObject::Update()
         if (test_token.isValid()) test[i] = test_token;
         auto rot = GetRotation();
         int flip = (SpriteGetFlipX() ? -1 : 1);
-        //��΢ʹ�ӵ���ʼλ������һ�㡪hkl
-         // ��ȡ��ҵ�ǰλ��
+        // 为了使子弹从合适的初始位置发射，计算一个偏移量
+        // 先获取玩家当前世界位置
 
         CF_V2 playerPos = GetPosition();
 
-        // �����ӵ�ƫ��λ�� - ����ƫ��n����λ
-        CF_V2 offset = v2math::angled(CF_V2(20.0f), rot + CF_PI / 2); // ����ƫ�ƣ���ֱ�ڳ���
-
+        // 计算子弹的偏移位置 — 这里偏移为沿玩家朝向的上方一定距离
+        CF_V2 offset = v2math::angled(CF_V2(20.0f), rot + CF_PI / 2); // 偏移量，垂直向上
 
         objs[test[i]].SetRotation(rot);
         objs[test[i]].SpriteFlipX(SpriteGetFlipX());
         objs[test[i]].SetPosition(GetPosition() - offset);
         objs[test[i]].SetVisible(true);
         objs[test[i]].SetVelocity(v2math::angled(CF_V2(30.0f), rot) * flip);
-		i = (i + 1) % 9; // ���Ͻ�����i�� TestObject ʵ����������������������ɵ��Ǹ�
+		i = (i + 1) % 9; // 轮换 i，用于复用 TestObject 实例槽
     }
 }

@@ -4,8 +4,9 @@ static constexpr float force = 1.0f;
 
 void TestObject::Start()
 {
-	// ��������ͼ·������������ʹ��Ĭ��ֵ
-	SpriteSetSource("/sprites/bullet.png", 1);
+	// 设置子弹贴图源，其他参数使用默认值
+	SpriteSetSource("/sprites/bullet.png", 2);
+	SpriteSetUpdateFreq(5); // 设置动画更新频率为每 5 帧更新一次
 }
 
 void TestObject::Update()
@@ -16,7 +17,7 @@ void TestObject::Update()
 	// 3) 可选阻尼（SetVelocity）
 	// 4) 将速度积分到位置（ApplyVelocity）
 
-	//Scale(3.0f);  // �Ŵ�2��������Ը�����Ҫ������ֵ
+	//Scale(3.0f);  // 缩放例子：一般不需要修改默认值
 
 	int dir = 0;
 	if (cf_key_down(CF_KEY_LEFT)) {
@@ -36,5 +37,5 @@ void TestObject::Update()
 	if (!cf_key_down(CF_KEY_LEFT) && !cf_key_down(CF_KEY_RIGHT)) {
 		vel *= damping;
 		SetVelocity(vel);
-	}*/
+	}
 }
