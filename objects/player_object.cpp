@@ -4,8 +4,7 @@
 // 每帧移动的速度
 static constexpr float speed = 3.0f;
 const float PI = 3.14159265358979f;
-
-ObjToken test[3] = { ObjToken::Invalid() };
+ObjToken test[9] = { ObjToken::Invalid() };
 int i = 0;
 void PlayerObject::Start()
 {
@@ -72,11 +71,20 @@ void PlayerObject::Update()
         if (test_token.isValid()) test[i] = test_token;
         auto rot = GetRotation();
         int flip = (SpriteGetFlipX() ? -1 : 1);
+        //��΢ʹ�ӵ���ʼλ������һ�㡪hkl
+         // ��ȡ��ҵ�ǰλ��
+
+        CF_V2 playerPos = GetPosition();
+
+        // �����ӵ�ƫ��λ�� - ����ƫ��n����λ
+        CF_V2 offset = v2math::angled(CF_V2(20.0f), rot + CF_PI / 2); // ����ƫ�ƣ���ֱ�ڳ���
+
+
         objs[test[i]].SetRotation(rot);
         objs[test[i]].SpriteFlipX(SpriteGetFlipX());
-        objs[test[i]].SetPosition(GetPosition());
+        objs[test[i]].SetPosition(GetPosition() - offset);
         objs[test[i]].SetVisible(true);
         objs[test[i]].SetVelocity(v2math::angled(CF_V2(30.0f), rot) * flip);
-		i = (i + 1) % 3; // 场上仅存在3个 TestObject 实例，若多出则销毁最早生成的那个
+		i = (i + 1) % 9; // ���Ͻ�����i�� TestObject ʵ����������������������ɵ��Ǹ�
     }
 }

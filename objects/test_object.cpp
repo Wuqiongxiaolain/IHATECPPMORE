@@ -1,11 +1,11 @@
 #include "test_object.h"
 
-static constexpr float force = 0.5f;
+static constexpr float force = 1.0f;
 
 void TestObject::Start()
 {
-	// 仅设置贴图路径，其他参数使用默认值
-	SpriteSetSource("/sprites/Obj_Platform.png", 1);
+	// ��������ͼ·������������ʹ��Ĭ��ֵ
+	SpriteSetSource("/sprites/bullet.png", 1);
 }
 
 void TestObject::Update()
@@ -15,6 +15,8 @@ void TestObject::Update()
 	// 2) 将力积分到速度（ApplyForce）
 	// 3) 可选阻尼（SetVelocity）
 	// 4) 将速度积分到位置（ApplyVelocity）
+
+	//Scale(3.0f);  // �Ŵ�2��������Ը�����Ҫ������ֵ
 
 	int dir = 0;
 	if (cf_key_down(CF_KEY_LEFT)) {
@@ -34,5 +36,5 @@ void TestObject::Update()
 	if (!cf_key_down(CF_KEY_LEFT) && !cf_key_down(CF_KEY_RIGHT)) {
 		vel *= damping;
 		SetVelocity(vel);
-	}
+	}*/
 }
