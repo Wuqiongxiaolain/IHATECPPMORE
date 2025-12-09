@@ -1,5 +1,5 @@
 #include "player_object.h"
-#include "test_object.h"
+#include "bullet.h"
 
 // 每帧移动的速度
 static constexpr float speed = 3.0f;
@@ -17,7 +17,6 @@ void PlayerObject::Start()
     SetPosition(cf_v2(0.0f, 0.0f));
 
     Scale(0.6f);
-	SetPivot(1,1);
 }
 
 void PlayerObject::Update()
@@ -67,23 +66,18 @@ void PlayerObject::Update()
         if (objs.TryGetRegisteration(test[i])) {
 			objs.Destroy(test[i]);
         }
-        auto test_token = objs.Create<TestObject>();
+        auto test_token = objs.Create<Bullet>();
         if (test_token.isValid()) test[i] = test_token;
         auto rot = GetRotation();
         int flip = (SpriteGetFlipX() ? -1 : 1);
         // 为了使子弹从合适的初始位置发射，计算一个偏移量
         // 先获取玩家当前世界位置
 
-        CF_V2 playerPos = GetPosition();
-
-        // 计算子弹的偏移位置 — 这里偏移为沿玩家朝向的上方一定距离
-        CF_V2 offset = v2math::angled(CF_V2(20.0f), rot + CF_PI / 2); // 偏移量，垂直向上
-
         objs[test[i]].SetRotation(rot);
         objs[test[i]].SpriteFlipX(SpriteGetFlipX());
-        objs[test[i]].SetPosition(GetPosition() - offset);
+        objs[test[i]].SetPosition(GetPosition());
         objs[test[i]].SetVisible(true);
-        objs[test[i]].SetVelocity(v2math::angled(CF_V2(30.0f), rot) * flip);
+        objs[test[i]].SetVelocity(v2math::angled(CF_V2(20.0f), rot) * flip);
 		i = (i + 1) % 9; // 轮换 i，用于复用 TestObject 实例槽
     }
 }

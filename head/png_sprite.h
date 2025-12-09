@@ -105,3 +105,4 @@ private:
 };
 
 extern std::atomic<int> g_frame_count; // 全局帧计数，用于同步动画时间
+extern int g_frame_rate; // 目标帧率
