@@ -42,6 +42,8 @@ void PlayerObject::Start()
     // 确保 maps 有默认条目（可选）
     s_grounded_map[this] = false;
     s_jump_hold_time_left[this] = 0.0f;
+
+	AddTag("player");
 }
 
 void PlayerObject::Update()
@@ -149,6 +151,7 @@ void PlayerObject::Update()
         if (hold_time_left < 0.0f) hold_time_left = 0.0f;
         s_jump_hold_time_left[this] = hold_time_left;
     }
+
 }
 
 void PlayerObject::OnCollisionEnter(const ObjManager::ObjToken& other_token, const CF_Manifold& manifold) noexcept {

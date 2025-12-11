@@ -453,3 +453,18 @@ const BaseObject& ObjManager::operator[](const ObjToken& token) const
     }
     return *e.ptr;
 }
+
+// 新增：按 tag 查询对象（需保证该tag只对应一个对象），并返回 token 列表
+ObjManager::ObjToken ObjManager::FindTokensByTag(const std::string& tag) const noexcept
+{
+    ObjToken out;
+    for (uint32_t i = 0; i < objects_.size(); ++i) {
+        const Entry& e = objects_[i];
+        if (!e.alive || !e.ptr) continue;
+        // 直接调用 BaseObject::HasTag（noexcept）
+        if (e.ptr->HasTag(tag)) {
+            out = ObjToken( i, e.generation, true );
+        }
+    }
+    return out;
+}
