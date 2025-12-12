@@ -468,14 +468,15 @@ void PhysicsSystem::Step(float cell_size) noexcept
 		}
 
 		// 从每个接触点绘制法向量（短线表示方向）
-		const float normal_length = 10.0f; // 法向量的可视长度
+		const float normal_length = 8.0f; // 法向量的可视长度
 		for (int i = 0; i < ev.manifold.count; ++i) {
 			CF_V2 cp = ev.manifold.contact_points[i];
-			CF_V2 normal_end = cp + ev.manifold.n * normal_length;
-			cf_draw_line(cp, normal_end, 0.0f);
+			CF_V2 normal = ev.manifold.n * normal_length;
+			cf_draw_line(cp - normal, cp + normal, 0.0f);
 
 			// 在法向量终点绘制一个小圆点，使方向更明显
-			cf_draw_circle2(normal_end, 2.0f, 0.0f);
+			cf_draw_circle2(cp - normal, 2.0f, 0.0f);
+			cf_draw_circle2(cp + normal, 2.0f, 0.0f);
 		}
 
 		cf_draw_pop_color();
