@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <vector>
 #include <type_traits>
 #include <unordered_set>
@@ -88,6 +89,10 @@ public:
     void UpdateAll() noexcept;
 
     size_t Count() const noexcept { return alive_count_; }
+
+    // 标签查询方法
+    // 返回所有已合并并带有指定 tag 的 ObjToken（registered tokens）
+    ObjToken FindTokensByTag(const std::string& tag) const noexcept;
 
 private:
     ObjManager() noexcept;

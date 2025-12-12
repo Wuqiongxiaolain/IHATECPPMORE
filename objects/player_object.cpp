@@ -42,6 +42,12 @@ void PlayerObject::Start()
     SetPosition(cf_v2(0.0f, 0.0f));
 
     Scale(0.6f);
+
+    // 确保 maps 有默认条目（可选）
+    s_grounded_map[this] = false;
+    s_jump_hold_time_left[this] = 0.0f;
+
+	AddTag("player");
     s_jump_count_map[this] = 2;
 }
 
@@ -164,6 +170,7 @@ void PlayerObject::Update()
     if (s_grounded_map[this]) {
         s_coyote_time_left[this] = coyote_time_frames;
     }
+
 }
 
 void PlayerObject::OnCollisionEnter(const ObjManager::ObjToken& other_token, const CF_Manifold& manifold) noexcept {
