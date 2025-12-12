@@ -10,11 +10,14 @@
 #include "delegate.h"
 #include "base_object.h"
 #include "drawing_sequence.h"
-#include "player_object.h"
-#include "test_block.h"
 #include "obj_manager.h"
+
+#include "player_object.h"
 #include "backgroud.h"
 #include "block_object.h"
+#include "move_spike.h"
+#include "spike.h"
+#include "checkpoint.h"
 
 static void print_debug_flags_once() {
 	std::cerr << "MCG_DEBUG=" << MCG_DEBUG << " MCG_DEBUG_LEVEL=" << MCG_DEBUG_LEVEL << std::endl;
@@ -54,12 +57,22 @@ int main(int argc, char* argv[])
 		fs_mount(base.c_str(), "");
 	}
 
-	// 使用 InstanceController 创建对象：现在返回 token（ObjectToken）
+	// 使用 ObjManager 创建对象：现在返回 token（ObjectToken）
 	auto player_token = objs.Create<PlayerObject>();
-	auto block_token = objs.Create<TestBlock>();
+	auto spike_token = objs.Create<MoveSpike>();
+	auto standing_spike_token = objs.Create<Spike>(CF_V2(154.0f, -324.0f));
 
 	// 创建背景对象
 	auto background_token = objs.Create<Backgroud>();
+
+	// 创建检查点对象
+	auto checkpoint1_token = objs.Create<Checkpoint>(cf_v2(-400.0f, -308.0f));
+	auto checkpoint2_token = objs.Create<Checkpoint>(cf_v2(400.0f, -308.0f));
+	// 记录上一个（或默认） checkpoint 的位置，用于玩家复活/传送使用
+	// -当前记默认位置为 (-300, -324)
+	CF_V2 last_checkpoint_pos = cf_v2(-300.0f, -308.0f);
+	if (checkpoint1_token.isValid()) 
+		last_checkpoint_pos = objs[checkpoint1_token].GetPosition();
 
 	// 创建方块对象。
 	// -构造函数传参方式（位置、是否为草坪）
@@ -70,6 +83,9 @@ int main(int argc, char* argv[])
 	auto block5_token = objs.Create<BlockObject>(cf_v2(-350.0f, -342.0f), false);
 	auto block6_token = objs.Create<BlockObject>(cf_v2(-314.0f, -342.0f), false);
 	auto block7_token = objs.Create<BlockObject>(cf_v2(-278.0f, -342.0f), false);
+	auto block7_1_token = objs.Create<BlockObject>(cf_v2(-278.0f, -306.0f), false);
+	auto block7_2_token = objs.Create<BlockObject>(cf_v2(-278.0f, -270.0f), false);
+	auto block7_3_token = objs.Create<BlockObject>(cf_v2(-278.0f, -234.0f), true);
 	auto block8_token = objs.Create<BlockObject>(cf_v2(-242.0f, -342.0f), true);
 	auto block9_token = objs.Create<BlockObject>(cf_v2(-206.0f, -342.0f), true);
 	auto block10_token = objs.Create<BlockObject>(cf_v2(-170.0f, -342.0f), false);
@@ -80,8 +96,11 @@ int main(int argc, char* argv[])
 	auto block15_token = objs.Create<BlockObject>(cf_v2(10.0f, -342.0f), false);
 	auto block16_token = objs.Create<BlockObject>(cf_v2(46.0f, -342.0f), true);
 	auto block17_token = objs.Create<BlockObject>(cf_v2(82.0f, -342.0f), true);
+	auto block17_1_token = objs.Create<BlockObject>(cf_v2(82.0f, -234.0f), true);
 	auto block18_token = objs.Create<BlockObject>(cf_v2(118.0f, -342.0f), false);
+	auto block18_1_token = objs.Create<BlockObject>(cf_v2(118.0f, -234.0f), true);
 	auto block19_token = objs.Create<BlockObject>(cf_v2(154.0f, -342.0f), false);
+	auto block19_1_token = objs.Create<BlockObject>(cf_v2(154.0f, -234.0f), true);
 	auto block20_token = objs.Create<BlockObject>(cf_v2(190.0f, -342.0f), true);
 	auto block21_token = objs.Create<BlockObject>(cf_v2(226.0f, -342.0f), true);
 	auto block22_token = objs.Create<BlockObject>(cf_v2(262.0f, -342.0f), false);
@@ -112,6 +131,54 @@ int main(int argc, char* argv[])
 		static bool _once = false;
 		if (!_once) { std::cerr << "[LOOP] app_update OK\n-----\n"; _once = true; }
 
+		//处理 R 键：瞬移或复活到上一个 checkpoint(利用last_checkpoint中存储的地址确定)
+		if (Input::IsKeyInState(CF_KEY_R, KeyState::Down))
+		{
+			// 重要：若 player_token 是 pending（Create 返回的）则 IsValid 会返回 false，
+			// 因此先尝试把可能的 pending token 升级为已注册 token（若已被合并）。
+			// 非 const TryGetRegisteration 会在成功时用真实 token 覆盖 player_token。
+			objs.TryGetRegisteration(player_token);
+
+			// 若玩家存在（registered 或 pending 并已被合并），直接瞬移到上一个 checkpoint
+			if (objs.IsValid(player_token))
+			{
+
+				try {
+					// 找到与玩家当前最近的 checkpoint（registered）
+					ObjManager::ObjToken nearest = objs.FindTokensByTag("checkpoint");
+					if (nearest.isValid() && objs.IsValid(nearest)) {
+						CF_V2 dest = objs[nearest].GetPosition() + CF_V2(0.0f, 30.0f);
+						objs[player_token].SetPosition(dest);
+						last_checkpoint_pos = dest; // 更新 last checkpoint 记录
+					}
+					else {
+						// 未找到已合并的 checkpoint：退回到 last_checkpoint_pos（可能是启动时的默认）
+						objs[player_token].SetPosition(last_checkpoint_pos);
+					}
+				}
+				catch (...) {
+					std::cerr << "[Main] Teleport failed\n";
+				}
+			}
+			else
+			{
+				// 玩家已被销毁或 token 无效：复活（Create 返回 pending token，可立即通过非 const operator[] 初始化）
+				player_token = objs.Create<PlayerObject>();
+				if (player_token.isValid()) {
+					try {
+						// 将新创建（pending）玩家放到上一个 checkpoint 位置
+						objs[player_token].SetPosition(last_checkpoint_pos);
+						objs[player_token].SetVelocity(cf_v2(0.0f, 0.0f));
+						objs[player_token].SetForce(cf_v2(0.0f, 0.0f));
+					}
+					catch (...) {
+						std::cerr << "[Main] Respawn: failed to initialize new player\n";
+					}
+				}
+			}
+		}
+
+		// 处理 ESC 键：按住 3 秒退出程序
 		if (cf_key_down(CF_KEY_ESCAPE))
 		{
 			auto now = std::chrono::steady_clock::now();
