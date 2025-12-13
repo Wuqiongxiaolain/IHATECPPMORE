@@ -125,11 +125,13 @@ void PlayerObject::EndFrame() {
 }
 
 void PlayerObject::OnExclusionSolid(const ObjManager::ObjToken& other_token, const CF_Manifold& manifold) noexcept {
-    if(std::abs(manifold.n.y) > 1 - 1e-3f)
+    if (std::abs(manifold.n.y) > 1 - 1e-3f && v2math::length(manifold.contact_points[0] - manifold.contact_points[1]) > 1e-3f) {
         SetVelocity(cf_v2(GetVelocity().x, 0.0f));
-    if (manifold.n.y > 1e-3f - 1 || v2math::length(manifold.contact_points[0] - manifold.contact_points[1]) < 1e-3f) return;
-    grounded = true;
-	double_jump_ready = true;
+        if (manifold.n.y < 0) {
+            grounded = true;
+            double_jump_ready = true;
+        }
+    }
 }
 
 #if TESTER
