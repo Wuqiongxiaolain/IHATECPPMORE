@@ -1,5 +1,6 @@
 #include "player_object.h"
 #include "bullet.h"
+#include <cute.h>
 
 extern std::atomic<int> g_frame_count;
 extern int g_frame_rate; // 全局帧率（每秒帧数）
@@ -33,6 +34,12 @@ void PlayerObject::Start()
     Scale(0.6f);
     jump_count = 2;
 	AddTag("player");
+
+    // 加载音效资源
+    jump_sound_ = cf_audio_load_wav("/audio/sound_jump.WAV");
+    shoot_sound_ = cf_audio_load_wav("/audio/sound_shoot.WAV");
+    double_jump_sound_ = cf_audio_load_wav("/audio/sound_doublejump.WAV");
+    land_sound_ = cf_audio_load_wav("/audio/sound_fall.WAV");
 }
 
 void PlayerObject::Update()
@@ -77,6 +84,9 @@ void PlayerObject::Update()
         auto rot = GetRotation();
         objs[token].SetRotation(rot);
         objs[token].SetVelocity(v2math::angled(CF_V2(12.0f), rot) * flip);
+
+        // 播放射击音效
+        cf_play_sound(shoot_sound_, cf_sound_params_defaults());
     }
 
     // 读取按住/保留时间引用（直接修改 map）
@@ -110,6 +120,13 @@ void PlayerObject::Update()
 			// 减少跳跃次数
             count--;
             if (count < 0) count = 0;
+
+            if (grd || coyote_left > 0) {
+                cf_play_sound(jump_sound_, cf_sound_params_defaults());
+            }
+            else {
+                cf_play_sound(double_jump_sound_, cf_sound_params_defaults());
+            }
         }
     }
 
@@ -182,11 +199,18 @@ void PlayerObject::Exclusion(const CF_Manifold& m) {
     SetPosition(new_position, true);
 
     if (m.n.y < 1e-5 - 1 && GetVelocity().y < 0 && v2math::length(m.contact_points[0]-m.contact_points[1]) > speed) {
+        bool was_grounded = grounded;
         grounded = true;
         hold_time_left = 0.0f;
         coyote_time_left = coyote_time_frames;
         jump_count = 2;
         SetVelocity(cf_v2(GetVelocity().x, 0.0f));
+
+
+        // 如果之前不在地面，现在着地了，播放着地音效
+        if (!was_grounded) {
+            cf_play_sound(land_sound_, cf_sound_params_defaults());
+        }
     }
 }
 
@@ -211,4 +235,13 @@ void PlayerObject::OnCollisionExit(const ObjManager::ObjToken& other_token, cons
 
     // 启动 coyote 时间（离地后短时间仍可起跳）
     coyote_time_left = coyote_time_frames;
-}
+    }
+
+//    PlayerObject::~PlayerObject()  {
+//        // 释放音效资源
+//        cf_audio_destroy(jump_sound_);
+//        cf_audio_destroy(shoot_sound_);
+//        cf_audio_destroy(double_jump_sound_);
+//        cf_audio_destroy(land_sound_);
+//    
+//}

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cmath>
 #include <unordered_map>
+#include <cute.h>
 
 class PlayerObject : public BaseObject {
 public:
@@ -23,4 +24,10 @@ private:
 	float hold_time_left = 0.0f;
 	int coyote_time_left = 0;
 	int jump_count = 2;
+
+	// “Ù–ß◊ ‘¥
+	CF_Audio jump_sound_;
+	CF_Audio shoot_sound_;
+	CF_Audio double_jump_sound_;
+	CF_Audio land_sound_;
 };
