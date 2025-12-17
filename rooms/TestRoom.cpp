@@ -11,6 +11,7 @@
 #include "spike.h"
 #include "down_spike.h"
 #include "checkpoint.h"
+#include "lateral_spike.h"
 
 class TestRoom : public BaseRoom {
 public:
@@ -31,6 +32,7 @@ public:
 		auto down_move_spike_token = objs.Create<DownMoveSpike>();
 		auto standing_spike1_token = objs.Create<Spike>(CF_V2(154.0f, -324.0f));
 		auto standing_down_spike1_token = objs.Create<DownSpike>(CF_V2(200.0f, -324.0f));
+		auto s1 = objs.Create<LateralSpike>(CF_V2(100.0f, -224.0f));
 
 		// 创建背景对象
 		auto background_token = objs.Create<Backgroud>();
