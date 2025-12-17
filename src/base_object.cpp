@@ -70,6 +70,10 @@ void BaseObject::SpriteSetSource(const std::string& path, int vertical_frame_cou
             SetCenteredAabb(static_cast<float>(m_sprite.w) * 0.5f, frame_height * 0.5f);
         }
     }
+
+    CF_V2 p = m_pivot;
+    SetPivot(-p);
+	SetPivot(p);
 }
 
 void BaseObject::SpriteSetUpdateFreq(int update_freq) noexcept

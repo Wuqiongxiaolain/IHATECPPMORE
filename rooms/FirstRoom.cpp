@@ -1,4 +1,5 @@
 #include "room_loader.h"
+#include "globalplayer.h"
 #include "UI_draw.h"
 #include "input.h"
 
@@ -23,23 +24,17 @@ public:
 	void RoomLoad() override {
 		OUTPUT({ "FirstRoom" }, "RoomLoad called.");
 
-		// 为简短调用创建引用别名
 		auto& objs = ObjManager::Instance();
+		auto& g_player = GlobalPlayer::Instance();
 
-		//创建玩家对象
-		auto player_token = objs.Create<PlayerObject>();
-		
+		float hw = DrawUI::half_w;
+		float hh = DrawUI::half_h;
+
 		// 创建背景对象
 		auto background_token = objs.Create<Backgroud>();
 
-		// 记录上一个（或默认） checkpoint 的位置，用于玩家复活/传送使用
-		// -当前记默认位置为
-		CF_V2 last_checkpoint_pos = cf_v2(-300.0f, 0.0f);
-
-		// 创建方块对象。
-		// -构造函数传参方式（位置、是否为草坪）
-		float hw = DrawUI::half_w;
-		float hh = DrawUI::half_h;
+		if (!g_player.HasRespawnRecord())g_player.SetRespawnPoint(cf_v2(-hw + 36 * 2, -hh + 36 * 2));
+		g_player.Emerge();
 
 		for (float y = -hh; y < hh; y += 36) {
 			objs.Create<BlockObject>(cf_v2(-hw, y), false);
@@ -55,7 +50,7 @@ public:
 		}
 
 		//手搓地图ing……
-		auto bolck1_token = objs.Create<BlockObject>(cf_v2(-hw + 36 * 4, -hh + 36), false);
+		auto bolck1_token = objs.Create<Checkpoint>(cf_v2(-hw + 36 * 4.5f, -hh + 36));
 		auto bolck2_token = objs.Create<BlockObject>(cf_v2(-hw + 36 * 8, -hh + 36), false);
 		auto bolck3_token = objs.Create<BlockObject>(cf_v2(-hw + 36 * 8, -hh + 36 * 2), false);
 		auto bolck4_token = objs.Create<BlockObject>(cf_v2(-hw + 36 * 12, -hh + 36), false);
@@ -87,7 +82,9 @@ public:
 
 	// 在这里添加房间更新逻辑
 	void RoomUpdate() override {
-		if (Input::IsKeyInState(CF_KEY_P, KeyState::Down)) {
+		if (Input::IsKeyInState(CF_KEY_T, KeyState::Down)&&
+			Input::IsKeyInState(CF_KEY_E, KeyState::Hold)&&
+			Input::IsKeyInState(CF_KEY_S, KeyState::Hold)) {
 			RoomLoader::Instance().Load("TestRoom");
 		}
 	}

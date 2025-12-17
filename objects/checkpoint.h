@@ -1,5 +1,6 @@
 #pragma once
 #include "base_object.h"
+#include "act_seq.h"
 
 // Checkpoint：可标记的复活点对象。
 // - 构造时可传入一个位置（CF_V2）。Start() 会把对象放到该位置并打上标签 "checkpoint"。
@@ -15,4 +16,5 @@ public:
 
 private:
     CF_V2 position;
+    ActSeq turning_green;
 };

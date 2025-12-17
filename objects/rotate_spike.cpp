@@ -1,4 +1,5 @@
 #include"rotate_spike.h"
+#include"globalplayer.h"
 
 extern int g_frame_rate; // 全局帧率（每秒帧数）
 
@@ -40,9 +41,10 @@ void RotateSpike::Update() {
 
 }
 
-void RotateSpike::OnCollisionEnter(const ObjManager::ObjToken& other_token, const CF_Manifold& manifold) noexcept {
+void RotateSpike::OnCollisionEnter(const ObjManager::ObjToken& other, const CF_Manifold& manifold) noexcept {
+	auto& g = GlobalPlayer::Instance();
 	//当刺碰到玩家时销毁玩家对象
-	if (objs[other_token].HasTag("player")) {
-		objs.Destroy(other_token);
+	if (other == g.Player()) {
+		g.Hurt();
 	}
 }

@@ -59,7 +59,7 @@ void PlayerObject::Update()
         auto token = objs.Create<Bullet>();
         int flip = (SpriteGetFlipX() ? -1 : 1);
         CF_V2 dir = v2math::get_dir(GetRotation()) * flip;
-        if (token.isValid()) objs[token].SetPosition(GetPosition() + dir * SpriteWidth() * 0.5f);
+        if (token.isValid()) objs[token].SetPosition(GetPosition() + dir * SpriteWidth() * 0.2f);
 
         // 设置发射方向与速度（测试用）
         auto rot = GetRotation();

@@ -29,28 +29,21 @@ public:
 		// 为简短调用创建引用别名
 		auto& objs = ObjManager::Instance();
 		auto& g_player = GlobalPlayer::Instance();
+		if(!g_player.HasRespawnRecord())g_player.SetRespawnPoint(cf_v2(-300.0f, -200.0f));
+		g_player.Emerge();
 
-		// Ԥ����Ҹ����λ��
-		g_player.SetRespawnPoint(cf_v2(-300.0f, 0.0f));
-
-		// ʹ�� ObjManager �����������ڷ��� token��ObjectToken��
-		g_player.CreatePlayerAtRespawn();
-		auto checkpoint_token = objs.Create<Checkpoint>(CF_V2(-200.0f, -200.0f));
-		auto spike_token = objs.Create<MoveSpike>();
-		auto up_move_spike_token = objs.Create<UpMoveSpike>();
-		auto down_move_spike_token = objs.Create<DownMoveSpike>();
-		auto rotate_spike_token = objs.Create<RotateSpike>();
-		auto standing_spike1_token = objs.Create<Spike>(CF_V2(154.0f, -324.0f));
-		auto standing_down_spike1_token = objs.Create<DownSpike>(CF_V2(200.0f, -324.0f));
-		auto standing_lateral_spike1_token = objs.Create<RightLateralSpike>(CF_V2(-150.0f, 324.0f));
-		auto standing_lateral_spike2_token = objs.Create<LeftLateralSpike>(CF_V2(-150.0f, 0.0f));
+		// 使用 ObjManager 创建对象：现在返回 token（ObjectToken）
+		objs.Create<MoveSpike>();
+		objs.Create<UpMoveSpike>();
+		objs.Create<DownMoveSpike>();
+		objs.Create<RotateSpike>();
+		objs.Create<Spike>(CF_V2(154.0f, -324.0f));
+		objs.Create<DownSpike>(CF_V2(200.0f, -324.0f));
+		objs.Create<RightLateralSpike>(CF_V2(-150.0f, 324.0f));
+		objs.Create<LeftLateralSpike>(CF_V2(-150.0f, 0.0f));
 
 		// 创建背景对象
-		auto background_token = objs.Create<Backgroud>();
-
-		// 记录上一个（或默认） checkpoint 的位置，用于玩家复活/传送使用
-		// -当前记默认位置为
-		CF_V2 last_checkpoint_pos = cf_v2(-300.0f, 0.0f);
+		objs.Create<Backgroud>();
 
 		// 创建方块对象。
 		// -构造函数传参方式（位置、是否为草坪）
@@ -69,8 +62,9 @@ public:
 		for (float x = -hw + 36; x < hw - 36; x += 36) {
 			objs.Create<BlockObject>(cf_v2(x, -hh), true);
 		}
+		objs.Create<Checkpoint>(CF_V2(-200.0f, -hh + 36.0f));
 #if TESTER
-		auto test_token = objs.Create<Tester>();
+		objs.Create<Tester>();
 #endif
 	}
 
@@ -78,10 +72,6 @@ public:
 	void RoomUpdate() override {
 		if (Input::IsKeyInState(CF_KEY_N, KeyState::Down)) {
 			RoomLoader::Instance().Load("EmptyRoom");
-		}
-
-		if (Input::IsKeyInState(CF_KEY_R, KeyState::Down)) {
-			RoomLoader::Instance().Load("TestRoom");
 		}
 	}
 
@@ -92,4 +82,4 @@ public:
 	}
 };
 
-REGISTER_INITIAL_ROOM("TestRoom", TestRoom);
+REGISTER_ROOM("TestRoom", TestRoom);
