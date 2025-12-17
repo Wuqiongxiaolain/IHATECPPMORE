@@ -85,6 +85,7 @@ public:
 		if (Input::IsKeyInState(CF_KEY_T, KeyState::Down)&&
 			Input::IsKeyInState(CF_KEY_E, KeyState::Hold)&&
 			Input::IsKeyInState(CF_KEY_S, KeyState::Hold)) {
+			GlobalPlayer::Instance().SetEmergePosition(CF_V2(-DrawUI::half_w + 36 * 4, -DrawUI::half_h + 36 * 2));
 			RoomLoader::Instance().Load("TestRoom");
 		}
 	}

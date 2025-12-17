@@ -1,5 +1,6 @@
 #include "diagonal_move_spike.h"
 #include "obj_manager.h"
+#include "globalplayer.h"
 
 // 声明全局帧率变量
 extern int g_frame_rate; // 全局帧率，每秒帧数
@@ -105,10 +106,10 @@ void DiogonalRigMoveSpike::Update() {
  
 }
 
-void DiogonalRigMoveSpike::OnCollisionEnter(const ObjManager::ObjToken& other_token, const CF_Manifold& manifold) noexcept {
-    // 当刺碰到玩家时销毁玩家对象
-    auto& objs = ObjManager::Instance();
-    if (objs[other_token].HasTag("player")) {
-        objs.Destroy(other_token);
+void DiogonalRigMoveSpike::OnCollisionEnter(const ObjManager::ObjToken& other, const CF_Manifold& manifold) noexcept {
+    auto& g = GlobalPlayer::Instance();
+    //当刺碰到玩家时销毁玩家对象
+    if (other == g.Player()) {
+        g.Hurt();
     }
 }

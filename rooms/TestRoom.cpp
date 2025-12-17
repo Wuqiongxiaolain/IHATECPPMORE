@@ -26,10 +26,11 @@ public:
 	void RoomLoad() override {
 		OUTPUT({ "TestRoom" }, "RoomLoad called.");
 
-		// 为简短调用创建引用别名
 		auto& objs = ObjManager::Instance();
 		auto& g_player = GlobalPlayer::Instance();
-		if(!g_player.HasRespawnRecord())g_player.SetRespawnPoint(cf_v2(-300.0f, -200.0f));
+		float hw = DrawUI::half_w;
+		float hh = DrawUI::half_h;
+		if(!g_player.HasRespawnRecord())g_player.SetRespawnPoint(CF_V2(-hw + 36 * 4, -hh + 36 * 2));
 		g_player.Emerge();
 
 		// 使用 ObjManager 创建对象：现在返回 token（ObjectToken）
@@ -44,11 +45,6 @@ public:
 
 		// 创建背景对象
 		objs.Create<Backgroud>();
-
-		// 创建方块对象。
-		// -构造函数传参方式（位置、是否为草坪）
-		float hw = DrawUI::half_w;
-		float hh = DrawUI::half_h;
 
 		for (float y = -hh; y < hh; y += 36) {
 			objs.Create<BlockObject>(cf_v2(-hw, y), false);
@@ -75,6 +71,7 @@ public:
 	// 在这里添加房间更新逻辑
 	void RoomUpdate() override {
 		if (Input::IsKeyInState(CF_KEY_N, KeyState::Down)) {
+			GlobalPlayer::Instance().SetEmergePosition(CF_V2(-DrawUI::half_w + 36 * 1.5f, -DrawUI::half_h + 36 * 2));
 			RoomLoader::Instance().Load("EmptyRoom");
 		}
 	}

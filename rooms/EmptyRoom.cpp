@@ -11,6 +11,7 @@
 #include "spike.h"
 #include "down_spike.h"
 #include "checkpoint.h"
+#include "globalplayer.h"
 
 class EmptyRoom : public BaseRoom {
 public:
@@ -20,25 +21,17 @@ public:
 	void RoomLoad() override {
 		OUTPUT({ "EmptyRoom" }, "RoomLoad called.");
 
-		// 为简短调用创建引用别名
 		auto& objs = ObjManager::Instance();
-		
+		auto& g_player = GlobalPlayer::Instance();
+
 		float hw = DrawUI::half_w;
 		float hh = DrawUI::half_h;
-
-		// 使用 ObjManager 创建对象：现在返回 token（ObjectToken）
-		auto player_token = objs.Create<PlayerObject>(-hw + 36.0f,-hh + 72.0f);
 
 		// 创建背景对象
 		auto background_token = objs.Create<Backgroud>();
 
-		// 记录上一个（或默认） checkpoint 的位置，用于玩家复活/传送使用
-		// -当前记默认位置为
-		CF_V2 last_checkpoint_pos = cf_v2(-300.0f, 0.0f);
-
-		// 创建方块对象。
-		// -构造函数传参方式（位置、是否为草坪）
-		
+		if (!g_player.HasRespawnRecord())g_player.SetRespawnPoint(cf_v2(-hw + 36 * 1.5f, -hh + 36 * 2));
+		g_player.Emerge();
 
 		//第一列下方的方块
 		for (float y = -hh; y < hh - 7 * 36; y += 72) {
@@ -62,6 +55,7 @@ public:
 
 	void RoomUpdate() override {
 		if (Input::IsKeyInState(CF_KEY_P, KeyState::Down)) {
+			GlobalPlayer::Instance().SetEmergePosition(CF_V2(-DrawUI::half_w + 36 * 2, -DrawUI::half_h + 36 * 2));
 			RoomLoader::Instance().Load("FirstRoom");
 		}
 	}
