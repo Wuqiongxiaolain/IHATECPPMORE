@@ -5,6 +5,7 @@
 class RotateSpike : public BaseObject {
 public:
 	RotateSpike() noexcept : BaseObject() {}
+	RotateSpike(const CF_V2& pos) : BaseObject(), initial_pos(pos) {}
 	~RotateSpike() noexcept {}
 	void Start() override;
 	void Update() override;
@@ -12,4 +13,5 @@ public:
 
 private:
 	ActSeq m_act_seq;
+	CF_V2 initial_pos{0.0f, 0.0f};
 };

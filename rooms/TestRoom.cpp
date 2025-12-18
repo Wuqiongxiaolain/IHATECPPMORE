@@ -12,7 +12,6 @@
 #include "down_spike.h"
 #include "lateral_spike.h"
 #include "checkpoint.h"
-#include "lateral_spike.h"
 
 #include "globalplayer.h"
 
@@ -74,7 +73,7 @@ public:
 	void RoomUpdate() override {
 		if (Input::IsKeyInState(CF_KEY_N, KeyState::Down)) {
 			GlobalPlayer::Instance().SetEmergePosition(CF_V2(-DrawUI::half_w + 36 * 1.5f, -DrawUI::half_h + 36 * 2));
-			RoomLoader::Instance().Load("EmptyRoom");
+			RoomLoader::Instance().Load("NextRoom");
 		}
 	}
 

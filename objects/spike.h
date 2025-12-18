@@ -1,6 +1,5 @@
 #pragma once
 #include "base_object.h"
-#include <vector>
 
 // Spike：用一个三角形作为碰撞箱的简单游戏对象
 class Spike : public BaseObject

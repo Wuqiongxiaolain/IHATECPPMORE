@@ -1,0 +1,36 @@
+#pragma once
+#include "base_object.h"
+#include "act_seq.h"
+
+class HiddenSpike : public BaseObject
+{
+public:
+    HiddenSpike(CF_V2 pos, int check_pos = 1, bool dir_up = true) noexcept 
+        : BaseObject(), position(pos), check_count(check_pos), direction_up(dir_up) {}
+    ~HiddenSpike() noexcept override {}
+
+    // 生命周期
+    void Start() override;
+
+	// 每帧更新钩子
+    void Update() override;
+
+	// 碰撞回调
+    void OnCollisionEnter(const ObjManager::ObjToken& other_token, const CF_Manifold& manifold) noexcept override;
+
+private:
+    // 隐藏刺的位置
+    CF_V2 position;
+
+    // 指示刺的指向
+    bool direction_up;
+
+    // 用于指示检查范围涵盖刺指向方向的几个格子
+    int check_count;
+
+    // 动作序列钩子
+    ActSeq m_act_seq;
+
+	// 每个对象的动作仅允许触发一次
+    bool once = true;
+};

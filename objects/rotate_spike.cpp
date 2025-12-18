@@ -7,7 +7,7 @@ void RotateSpike::Start() {
 
 	// 设置精灵资源与初始状态
 	SpriteSetStats("/sprites/Obj_Spike.png", 1, 1, 0);
-	SetPosition(cf_v2(100.0f, -324.0f)); // 初始位置
+	SetPosition(initial_pos); // 初始位置
 	Scale(1.0f); // 初始缩放为 1 倍
 
 	float hw = SpriteWidth() / 2.0f;
