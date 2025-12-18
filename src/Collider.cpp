@@ -458,14 +458,14 @@ void PhysicsSystem::Step(float cell_size) noexcept
 		CF_Manifold manifold_for_b = orient_manifold(ev.manifold, ob, oa);
 			if (was_colliding) {
 				oa.OnCollisionState(ev.b, manifold_for_a, BaseObject::CollisionPhase::Stay);
-			}
-			else {
-				oa.OnCollisionState(ev.b, manifold_for_a, BaseObject::CollisionPhase::Enter);
-			}
-			if (was_colliding) {
 				ob.OnCollisionState(ev.a, manifold_for_b, BaseObject::CollisionPhase::Stay);
 			}
 			else {
+#if COLLISION_DEBUG
+				// Enter 打印简短信息
+				OUTPUT({ "Physics" }, "Collision Enter: a =", ev.a.index, "b =", ev.b.index);
+#endif
+				oa.OnCollisionState(ev.b, manifold_for_a, BaseObject::CollisionPhase::Enter);
 				ob.OnCollisionState(ev.a, manifold_for_b, BaseObject::CollisionPhase::Enter);
 			}
 	}

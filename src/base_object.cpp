@@ -178,7 +178,6 @@ void BaseObject::FindContactPos(CF_V2 current, CF_V2 offset, const BaseObject& o
 APPLIANCE void BaseObject::OnCollisionState(const ObjManager::ObjToken& other, const CF_Manifold& manifold, CollisionPhase phase) noexcept
 {
     CF_Manifold m = manifold;
-    if (!IsCollidedWith(objs[other], m)) return;
     // 处理与固体对象的排斥逻辑（如果启用）:
     // 将碰撞体沿着速度方向逐步回退1像素直到与other刚好接触而不重叠
     if (m_exclude_with_solid && 

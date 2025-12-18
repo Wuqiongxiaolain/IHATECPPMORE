@@ -7,7 +7,7 @@ void Spike::Start()
     SpriteSetSource("/sprites/Obj_Spike.png", 1);
 
     SetPivot(0, -1);
-    SetPosition(CF_V2(position));
+    SetPosition(position + CF_V2(0,1));
 
 	float hw = SpriteWidth() / 2.0f;
 	float hh = SpriteHeight() / 2.0f;

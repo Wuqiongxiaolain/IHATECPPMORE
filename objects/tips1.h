@@ -19,6 +19,8 @@ public:
 	{
 		//获取玩家位置
 		auto& player = GlobalPlayer::Instance().Player();
+		if (!objs.TryGetRegisteration(player)) return;
+
 		CF_V2 pos = objs[player].GetPosition();
 
 		float check_y1 = -360.0f;

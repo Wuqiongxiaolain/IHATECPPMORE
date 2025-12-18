@@ -29,6 +29,7 @@ void Checkpoint::OnCollisionEnter(const ObjManager::ObjToken& other, const CF_Ma
     // （之后可以继续完善，比如添加音效反馈，对其它类型物体产生效果等）
     if (!objs[other].HasTag("bullet")) return;
 	auto player = g_player.Player();
+    if (!objs.TryGetRegisteration(player)) return;
     auto pos = GetPosition();
 	auto player_pos = objs[player].GetPosition();
     if (v2math::length(pos - player_pos) <= 45.0f) {
