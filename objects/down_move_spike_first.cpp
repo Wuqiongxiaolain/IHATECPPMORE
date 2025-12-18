@@ -47,23 +47,20 @@ void FirstDownMoveSpike::Start() {
 	);
 }
 
-int i = 1;
-
 void FirstDownMoveSpike::Update() {
 
 	//获取玩家位置
 	auto& player = GlobalPlayer::Instance().Player();
+	if (!objs.TryGetRegisteration(player)) return;
+
 	CF_V2 pos = objs[player].GetPosition();
 
 	float check_x1 = 396.0f;
 	float check_y1 = -288.0f;
 
-	if (pos.x > check_x1 && i == 1 && pos.y < check_y1) {
-
+	if (pos.x > check_x1  && pos.y < check_y1) {
 		// 播放动作序列
-		m_act_seq.play(this);
-
-		i--;
+		if(!m_act_seq.is_playing()) m_act_seq.play(this);
 	}
 
 

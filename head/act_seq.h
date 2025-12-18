@@ -48,14 +48,32 @@ public:
         return steps_.empty();
     }
 
+    // 返回当前是否有 play 正在执行
+    bool is_playing() const {
+        std::lock_guard<std::mutex> lg(mutex_);
+        return is_playing_;
+    }
+
     // 播放动作链：为指定对象创建协程并立即开始（由 main_thread_on_update 驱动）
-    // 返回 true 表示已成功创建协程并开始播放；返回 false 表示动作链为空或创建失败。
+    // 返回 true 表示已成功创建协程并开始播放；返回 false 表示动作链为空、已在播放或创建失败。
     bool play(BaseObject* obj, bool loop = false) {
         CF_Coroutine co;
         {
             std::lock_guard<std::mutex> lg(mutex_);
             if (steps_.empty() || obj == nullptr) return false;
+            is_playing_ = true;
+        }
 
+        {
+            std::lock_guard<std::mutex> lg(mutex_);
+            if (steps_.empty() || obj == nullptr) {
+                set_playing(false);
+                return false;
+            }
+        }
+
+        {
+            std::lock_guard<std::mutex> lg(mutex_);
             // 上下文结构，传入协程的 udata
             struct Context {
                 ActSeq const* seq;
@@ -81,8 +99,8 @@ public:
                     {
                         std::lock_guard<std::mutex> lg(seq->mutex_);
                         if (i >= seq->steps_.size()) {
-                            if (!c->loop) break; // ���û�г�ѭ���˳�
-                            i = 0; // ��������������ʼ
+                            if (!c->loop) break;
+                            i = 0;
                         }
                         step = seq->steps_[i % seq->steps_.size()];
                     }
@@ -130,4 +148,10 @@ private:
 
     mutable std::mutex mutex_;
     std::vector<Step> steps_;
+    bool is_playing_ = false;
+
+    void set_playing(bool playing) {
+        std::lock_guard<std::mutex> lg(mutex_);
+        is_playing_ = playing;
+    }
 };
