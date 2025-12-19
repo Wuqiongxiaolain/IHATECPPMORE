@@ -1,5 +1,6 @@
 #include "player_object.h"
 #include "bullet.h"
+#include "cute.h"
 
 extern std::atomic<int> g_frame_count;
 extern int g_frame_rate; // 全局帧率（每秒帧数）
@@ -34,6 +35,20 @@ void PlayerObject::Start()
 
 	// 初始化跳跃状态
 	double_jump_ready = true;
+
+    // 加载音效资源
+    jump_sound_ = cf_audio_load_wav("/audio/sound_jump.WAV");
+    shoot_sound_ = cf_audio_load_wav("/audio/sound_shoot.WAV");
+    double_jump_sound_ = cf_audio_load_wav("/audio/sound_doublejump.WAV");
+    land_sound_ = cf_audio_load_wav("/audio/sound_fall.WAV");
+    
+    // 加载背景音乐
+    background_music_ = cf_audio_load_wav("/audio/test_music_TheHappyTroll.wav");
+
+    // 播放背景音乐并设置循环
+    cf_music_play(background_music_,0.0f);
+    cf_music_set_loop( false);
+    cf_music_set_volume( 0.5f); // 设置背景音乐音量为50%
 }
 
 void PlayerObject::Update()
@@ -66,6 +81,9 @@ void PlayerObject::Update()
         auto rot = GetRotation();
         objs[token].SetRotation(rot);
         objs[token].SetVelocity(v2math::angled(CF_V2(12.0f), rot) * flip);
+
+        // 播放射击音效
+        cf_play_sound(shoot_sound_, cf_sound_params_defaults());
     }
 
     if (Input::IsKeyInState(CF_KEY_SPACE, KeyState::Down)) {
@@ -80,6 +98,16 @@ void PlayerObject::Update()
             double_jump_ready = false;
             grounded = true; // 允许二段跳
         }
+
+
+        // 播放跳跃音效
+        if (double_jump_ready) {
+            cf_play_sound(jump_sound_, cf_sound_params_defaults());
+        } else {
+            cf_play_sound(double_jump_sound_, cf_sound_params_defaults());
+        }
+
+
         SetVelocityY(double_jump_ready ? 8.25f : 7.9f);
         grounded = false;
         jump_input_timer = 0.0f;
@@ -143,8 +171,11 @@ void PlayerObject::OnExclusionSolid(const ObjManager::ObjToken& other_token, con
     if (std::abs(manifold.n.y) > 1 - 1e-3f && v2math::length(manifold.contact_points[0] - manifold.contact_points[1]) > 1e-3f) {
         SetVelocity(cf_v2(GetVelocity().x, 0.0f));
         if (manifold.n.y < 0) {
+
             grounded = true;
             double_jump_ready = true;
+         
+
         }
     }
 }
