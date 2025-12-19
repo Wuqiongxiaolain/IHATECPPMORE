@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include<cute_math.h>
 #include "room_loader.h"
 #include "obj_manager.h"
@@ -23,7 +24,14 @@ public:
 	void SetRespawnPoint(CF_V2 pos) noexcept {
 		respawn_point = pos;
 		respawn_room = RoomLoader::Instance().GetCurrentRoom();
+		if (auto room_name = RoomLoader::Instance().GetCurrentRoomName()) {
+			respawn_room_name = *room_name;
+		}
+		else {
+			respawn_room_name.clear();
+		}
 		has_record = true;
+		PersistRespawnRecord();
 	}
 
 	// 判断是否已有复活记录
@@ -34,6 +42,8 @@ public:
 		return respawn_room;
 	}
 
+	// 获取记录的复活房间名称（用于启动恢复）
+	const std::string& GetRespawnRoomName() const noexcept { return respawn_room_name; }
 
 	// 设置下次出现的位置（不同于复活，通常用于剧情或特殊事件）
 	void SetEmergePosition(CF_V2 pos) noexcept {
@@ -53,11 +63,17 @@ public:
 	// 触发玩家受伤效果：产生血迹并销毁当前玩家实例
 	void Hurt();
 
+	// 从磁盘加载存档（成功不代表 has_record=true）
+	bool LoadSavedRespawn() noexcept;
+
 private:
+	bool PersistRespawnRecord() const noexcept;
+
 	// 记录玩家复活位置
 	CF_V2 respawn_point = cf_v2(0.0f, 0.0f);
 	const BaseRoom* respawn_room;
 	bool has_record = false;
+	std::string respawn_room_name;
 
 	// 储存当前玩家对象标识与出现点信息
 	ObjManager::ObjToken player_token = ObjManager::ObjToken::Invalid();

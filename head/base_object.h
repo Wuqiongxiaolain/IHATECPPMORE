@@ -49,11 +49,17 @@
 #define APPLIANCE [[deprecated("APPLIANCE: 涉及物理量的每帧更新，已在类内部完成。除非你需要单帧内多次更新，否则请勿使用该接口。")]]
 #endif
 
+namespace {
+    ObjManager& objs = ObjManager::Instance();
+    bool inside(CF_V2 pos, float min_x, float max_x, float min_y, float max_y) {
+        return (pos.x >= min_x && pos.x <= max_x && pos.y >= min_y && pos.y <= max_y);
+    }
+}
+
 class BaseObject;
 void RenderBaseObjectCollisionDebug(const BaseObject* obj) noexcept;
 void ManifoldDrawDebug(const CF_Manifold& m) noexcept;
 
-inline ObjManager& objs = ObjManager::Instance();
 
 class BaseObject : public BasePhysics {
 public:

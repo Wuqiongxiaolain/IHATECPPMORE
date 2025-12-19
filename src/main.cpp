@@ -67,8 +67,15 @@ int main(int argc, char* argv[])
 	// 设置目标帧率
 	cf_set_target_framerate(g_frame_rate);
 
-	// 生成初始房间
-	RoomLoader::Instance().LoadInitial(); 
+	// 尝试恢复存档
+	auto& player_state = GlobalPlayer::Instance();
+	player_state.LoadSavedRespawn();
+	if (player_state.HasRespawnRecord() && !player_state.GetRespawnRoomName().empty()) {
+		RoomLoader::Instance().Load(player_state.GetRespawnRoomName());
+	}
+	else {
+		RoomLoader::Instance().LoadInitial();
+	}
 
 	// esc 键长按退出相关参数
 	auto esc_hold_threshold = std::chrono::seconds(3);
@@ -149,7 +156,7 @@ int main(int argc, char* argv[])
 		if (esc_was_down) { DrawUI::EscDraw(esc_down_start, esc_hold_threshold); }
 
 		app_draw_onto_screen(true);
- 	}
+		}
 
 	// 程序退出：
 	// 由控制器销毁所有对象

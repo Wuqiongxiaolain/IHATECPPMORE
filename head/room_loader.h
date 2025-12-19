@@ -3,6 +3,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <cstddef>
@@ -57,18 +58,7 @@ public:
 
 	// 通过房间名称加载房间
 	void Load(const std::string& room_name) {
-		if (room_name.empty()) {
-			OUTPUT({ "RoomLoader::Load" }, "Attempted to load room with empty name.");
-			return;
-		}
-
-		auto it = rooms_.find(room_name);
-		if (it == rooms_.end() || !it->second) {
-			OUTPUT({ "RoomLoader::Load" }, "Room not found or null:", room_name);
-			return;
-		}
-
-		Load(*it->second);
+		Load(*GetRoomByName(room_name));
 		OUTPUT({ "RoomLoader::Load" }, "Loaded room:", room_name);
 	}
 
@@ -134,6 +124,34 @@ public:
 		return initial_room_ ? &initial_room_->get() : nullptr;
 	}
 
+	const BaseRoom* GetRoomByName(std::string_view room_name) const noexcept {
+		auto it = rooms_.find(std::string(room_name));
+		if (it == rooms_.end()) {
+			return nullptr;
+		}
+		return it->second.get();
+	}
+
+	std::optional<std::string> GetRoomName(const BaseRoom* room) const noexcept {
+		if (!room) {
+			return std::nullopt;
+		}
+
+		for (const auto& [name, ptr] : rooms_) {
+			if (ptr && ptr.get() == room) {
+				return name;
+			}
+		}
+		return std::nullopt;
+	}
+
+	std::optional<std::string> GetCurrentRoomName() const noexcept {
+		if (!current_room_) {
+			return std::nullopt;
+		}
+		return GetRoomName(&current_room_->get());
+	}
+
 	size_t GetEstimatedMemoryUsageBytes() const noexcept {
 		size_t total = 0;
 		total += rooms_.bucket_count() * sizeof(decltype(rooms_)::value_type);
@@ -169,14 +187,8 @@ namespace room_loader_detail {
 #define ROOM_LOADER_CONCAT_IMPL(x, y) x##y
 #define ROOM_LOADER_CONCAT(x, y) ROOM_LOADER_CONCAT_IMPL(x, y)
 
-// 使用静态注册器实现模块加载时自动调用 RoomLoader::RegisterRoom 以完成房间注册。
-// 宏展开会生成一个 const static 的 RoomRegistrar 实例，利用 __COUNTER__ 生成独一无二的变量名，阻止命名冲突。
-// 注册器构造过程中负责创建实际房间对象并将其传递给 RoomLoader，初始房间通过额外参数标记。
-// 这一套机制在编译期即完成填写，实现了将具体房间派生类与 main 函数加载逻辑的彻底解耦。
-// 若要将房间设置为初始房间，请使用REGISTER_INITIAL_ROOM
 #define REGISTER_ROOM(NAME, TYPE) \
 	static const room_loader_detail::RoomRegistrar<TYPE> ROOM_LOADER_CONCAT(room_registrar_, __COUNTER__)(NAME, false)
 
-// 注册房间并标记为初始
 #define REGISTER_INITIAL_ROOM(NAME, TYPE) \
 	static const room_loader_detail::RoomRegistrar<TYPE> ROOM_LOADER_CONCAT(room_registrar_, __COUNTER__)(NAME, true)

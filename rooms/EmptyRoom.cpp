@@ -129,16 +129,11 @@ public:
 			objs.Create<Spike>(CF_V2(-hw + 4 * 36.0f - 0.5 * 36.0f,y));
 		}
 
-		// Vertical movement configuration
-   /* float move_distance = 200.0f;*/ // Total movement distance
-	//float move_speed = 0.8f;      // Time for one vertical movement (seconds)
-	//float wait_time = 0.5f;       // Wait time at endpoints
-
 		//第二列的竖向移动方块 上面的
-		objs.Create<VerticalMovingSpike>(CF_V2(-hw + 1.5 * 36.0f),1.0f,0.1f,220.0f);
+		objs.Create<VerticalMovingSpike>(CF_V2(-hw + 1.5 * 36.0f), 1.0f, 0.1f, 220.0f);
 
 		//第二列的竖向移动方块 下面的
-		objs.Create<VerticalMovingSpike>(CF_V2(-hw + 1.5 * 36.0f, -hh + 3 * 36.0f) , 0.8f,0.2f,220.0f);
+		objs.Create<VerticalMovingSpike>(CF_V2(-hw + 1.5 * 36.0f, -hh + 3 * 36.0f), 0.8f, 0.2f, 220.0f);
 
 		//中间中方移动的刺 左边的
 		objs.Create<VerticalMovingSpike>(CF_V2( - 3 * 36.0f,36.0f), 1.0f, 0.1f, 120.0f);
@@ -147,10 +142,10 @@ public:
 		objs.Create<VerticalMovingSpike>(CF_V2( 3 * 36.0f,36.0f), 1.0f, 0.1f, 120.0f);
 
 		//斜着移动的左动刺
-		objs.Create<DiogonalLefMoveSpike>(CF_V2(-2 * 36.0f, 7*36.0f),1.0f,0.1f);
+		objs.Create<DiogonalLefMoveSpike>(CF_V2(-2 * 36.0f, 7 * 36.0f), 1.0f, 0.1f);
 
 		//斜着移动的右动刺
-		objs.Create<DiogonalRigMoveSpike>(CF_V2(36.0f,7 * 36.0f),0.8f,0.1f);
+		objs.Create<DiogonalRigMoveSpike>(CF_V2(36.0f, 7 * 36.0f), 0.8f, 0.1f);
 		
 	}
 

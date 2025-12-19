@@ -22,19 +22,17 @@ public:
 	void RoomLoad() override {
 		OUTPUT({ "NextRoom" }, "RoomLoad called.");
 
-		auto& objs = ObjManager::Instance();
-		auto& g_player = GlobalPlayer::Instance();
-
+		auto& g = GlobalPlayer::Instance();
 		float hw = DrawUI::half_w;
 		float hh = DrawUI::half_h;
 
 		// 创建背景对象
 		auto background_token = objs.Create<Backgroud>();
 
-		if (!g_player.HasRespawnRecord())g_player.SetRespawnPoint(cf_v2(-hw + 36 * 2, -hh + 36 * 2));
-		g_player.Emerge();
+		if (!g.HasRespawnRecord())g.SetRespawnPoint(cf_v2(-hw + 36 * 2, -hh + 36 * 2));
+		g.Emerge();
 
-		for (float y = -hh; y < hh; y += 36) {
+		for (float y = -hh + 4 * 36.0f; y < hh; y += 36) {
 			objs.Create<BlockObject>(cf_v2(-hw, y), false);
 		}
 		for (float y = -hh; y < hh; y += 36) {
@@ -43,7 +41,7 @@ public:
 		for (float x = -hw + 36; x < hw - 36; x += 36) {
 			objs.Create<BlockObject>(cf_v2(x, hh - 36.0f), false);
 		}
-		for (float x = -hw + 36; x < hw - 36; x += 36) {
+		for (float x = -hw; x < hw - 36; x += 36) {
 			objs.Create<BlockObject>(cf_v2(x, -hh), true);
 		}
 
@@ -213,8 +211,13 @@ public:
 
 	// 在这里添加房间更新逻辑
 	void RoomUpdate() override {
+		auto& g = GlobalPlayer::Instance();
+		if (objs.TryGetRegisteration(g.Player()) && objs[g.Player()].GetPosition().x < -DrawUI::half_w) {
+			g.SetEmergePosition(CF_V2(DrawUI::half_w - 36 * 0.3f, objs[g.Player()].GetPosition().y));
+			RoomLoader::Instance().Load("FirstRoom");
+		}
 		if (Input::IsKeyInState(CF_KEY_N, KeyState::Down)) {
-			GlobalPlayer::Instance().SetEmergePosition(CF_V2(-DrawUI::half_w + 36 * 4, -DrawUI::half_h + 36 * 2));
+			GlobalPlayer::Instance().SetEmergePosition(CF_V2(-DrawUI::half_w + 36 * 1.5f, -DrawUI::half_h + 36 * 2));
 			RoomLoader::Instance().Load("EmptyRoom");
 		}
 	}
